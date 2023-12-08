@@ -20,13 +20,12 @@ def get_attentions(src, dest):
     layer_attn = []
     for layer in outputs.cross_attentions:
         layer_attns = layer.squeeze(0)
-        attns_per_head = layer_attns.mean(dim=0)
-        layer_attn.append(attns_per_head)
-    attns = torch.permute(torch.stack([x.detach() for x in layer_attn]), (1, 2, 0))
+        layer_attn.append(layer_attns)
+    attns = torch.permute(torch.stack([x.detach() for x in layer_attn]), (2, 3, 0, 1))
     return attns[1:-1, 1:-1]
 
 def generate_training():
-    for case in tqdm(training_data):
+    for case in tqdm(training_data[1000:]):
         src = case['src']
         src_tokens = get_tokens(src)
         dest = case['dest']
@@ -35,11 +34,11 @@ def generate_training():
         matches = set(map(tuple, case['matches']))
         for src_idx in range(len(src_tokens)):
             for dest_idx in range(len(dest_tokens)):
-                scores = attns[src_idx][dest_idx].numpy().tolist()
+                scores = attns[src_idx][dest_idx].numpy().flatten().tolist()
                 src_token = src_tokens[src_idx]
                 dest_token = dest_tokens[dest_idx]
                 pair = (src_token, dest_token, scores, 1 if (src_idx, dest_idx) in matches else 0)
                 yield pair
 
-#for s, d, xs, y in generate_training():
-#    print(','.join(map(str, ['"%s"' % s, '"%s"' % d] + xs + [y])))
+# for s, d, xs, y in generate_training():
+#     print(','.join(map(str, ['"%s"' % s, '"%s"' % d] + xs + [y])))
