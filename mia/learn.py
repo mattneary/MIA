@@ -20,4 +20,4 @@ def learn():
     print(logreg.score(Xt, Yt))
     print(logreg.coef_)
 
-learn()
+# learn()
